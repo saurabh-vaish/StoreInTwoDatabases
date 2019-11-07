@@ -1,0 +1,19 @@
+For multiple datasources we need to configure it manually . In this example mysql and postgre are used as two different datasources.
+steps :-
+    1. create model classes and repos in different packgs according to their datasources
+    2. create properties file with keys of driver class name , url , username , password for both the datasources with different names.
+    3. Similarly make hibernate properties with dialect for both the data-sources.
+    4. Define two configuration classes for both the data-sources.
+    5. Data-source configuration ------
+
+   --- make a classes annotated with @Configuration , @ EnableTransactionManagement and
+    @EnableJpaRepositories(
+            entityManagerFactoryRef = "name of entity manager bean",
+            transactionManagerRef = "name of transaction manager bean",
+            basePackages = " full package name of their corresponding repositories "
+    )
+   --- Define datasouce bean e.g. DriverManagerDataSource or BasicDataSource and set properties to them.
+   --- use @Bean(name of bean)
+   --- Define LocalContainerEntityManagerFactoryBean(EntityManagerFactoryBuilder) and set data-source , hibernate properties , model class package and give unique persistent unit name
+   --- use @Bean(name of bean)
+   --- Define PlatformTransactionManager and return JpaTransactionManager

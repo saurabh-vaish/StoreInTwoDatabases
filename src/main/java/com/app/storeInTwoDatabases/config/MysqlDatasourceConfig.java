@@ -26,9 +26,9 @@ import java.util.stream.Collectors;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(
-        entityManagerFactoryRef = "mysqlEntityManagerBean",
-        transactionManagerRef = "mysqlTransactionManager",
-        basePackages = "com.app.storeInTwoDatabases.repo.mysql"
+        entityManagerFactoryRef = "mysqlEntityManagerBean",             //  name of EntityManagerFactoryBean
+        transactionManagerRef = "mysqlTransactionManager",              // Name of Transaction Manager bean
+        basePackages = "com.app.storeInTwoDatabases.repo.mysql"         // full pkg name of repositories corresponding to this datasource
 )
 public class MysqlDatasourceConfig {
 
@@ -37,7 +37,7 @@ public class MysqlDatasourceConfig {
 
 
     @Bean(name = "mysqlDatasource")
-    @ConfigurationProperties(prefix = "mysql.datasource")
+    @ConfigurationProperties(prefix = "mysql.datasource")           // properties to bind with this object
     public DataSource mysqlDatasource() {
 
         DriverManagerDataSource dataSource  = new DriverManagerDataSource();
@@ -51,11 +51,17 @@ public class MysqlDatasourceConfig {
 
     @Bean(name = "mysqlEntityManagerBean")
     public LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean(EntityManagerFactoryBuilder builder) {
-        return builder.dataSource(mysqlDatasource()).properties(hibernateProperties()).packages("com.app.storeInTwoDatabases.model.mysql").persistenceUnit("mysqlPu").build();
+        return builder
+                .dataSource(mysqlDatasource())  // set data-source
+                .properties(hibernateProperties())       // set hibernate properties
+                .packages("com.app.storeInTwoDatabases.model.mysql")         // set model class pkg
+                .persistenceUnit("mysqlPu")   // unique persistent unit name
+                .build();
     }
 
     private Map hibernateProperties() {
 
+        // get properties from class path and load them
         try {
             return PropertiesLoaderUtils.loadProperties(new ClassPathResource("hibernate-mysql.properties")).entrySet().stream()
                     .collect(Collectors.toMap(e -> e.getKey().toString(), Map.Entry::getValue));
@@ -64,7 +70,7 @@ public class MysqlDatasourceConfig {
         }
     }
 
-    @Bean(name = "mysqlTransactionManager")
+    @Bean(name = "mysqlTransactionManager")          // bean name for transaction manager
     public PlatformTransactionManager platformTransactionManager(@Qualifier("mysqlEntityManagerBean") EntityManagerFactory entityManagerFactory) {
         return new JpaTransactionManager(entityManagerFactory);
     }

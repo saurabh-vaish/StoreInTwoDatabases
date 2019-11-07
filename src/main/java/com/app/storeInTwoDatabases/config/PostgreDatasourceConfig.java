@@ -22,15 +22,16 @@ import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(
-        entityManagerFactoryRef = "postgreEntityManagerBean",
-        transactionManagerRef = "postgreTransactionManager",
-        basePackages = "com.app.storeInTwoDatabases.repo.postgre"
+        entityManagerFactoryRef = "postgreEntityManagerBean",                   // name of EntityManagerFactoryBean
+        transactionManagerRef = "postgreTransactionManager",                    // Name of Transaction Manager bean
+        basePackages = "com.app.storeInTwoDatabases.repo.postgre"               // full pkg name of repositories corresponding to this datasource
 )
 public class PostgreDatasourceConfig {
 
@@ -39,11 +40,11 @@ public class PostgreDatasourceConfig {
 
     @Primary
     @Bean(name="postgreDatasource")
-    @ConfigurationProperties(prefix = "postgre.datasource")
+    @ConfigurationProperties(prefix = "postgre.datasource")    // properties to bind with this datasource
     public DataSource dataSource()
     {
         DriverManagerDataSource dataSource  = new DriverManagerDataSource();
-        dataSource.setDriverClassName(env.getProperty("postgre.datasource.driver-class-name"));
+        dataSource.setDriverClassName(Objects.requireNonNull(env.getProperty("postgre.datasource.driver-class-name")));
         dataSource.setUrl(env.getProperty("postgre.datasource.url"));
         dataSource.setUsername(env.getProperty("postgre.datasource.ursername"));
         dataSource.setPassword(env.getProperty("postgre.datasource.password"));
@@ -55,11 +56,17 @@ public class PostgreDatasourceConfig {
     @Bean(name = "postgreEntityManagerBean")
     public LocalContainerEntityManagerFactoryBean  localContainerEntityManagerFactoryBean(EntityManagerFactoryBuilder builder)
     {
-        return builder.dataSource(dataSource()).properties(hibernateProperties()).packages("com.app.storeInTwoDatabases.model.postgre").persistenceUnit("postgrePu").build();
+        return builder
+                .dataSource(dataSource())     // set data-source
+                .properties(hibernateProperties())          // set hibernate properties
+                .packages("com.app.storeInTwoDatabases.model.postgre")          // set model class pkg
+                .persistenceUnit("postgrePu")               // unique persistent unit name
+                .build();           // build
     }
 
     private Map hibernateProperties() {
 
+        // get properties from class path and load them
         try {
             return PropertiesLoaderUtils.loadProperties(new ClassPathResource("hibernate-postgre.properties")).entrySet().stream()
                     .collect(Collectors.toMap(e -> e.getKey().toString(), Map.Entry::getValue));
@@ -71,7 +78,7 @@ public class PostgreDatasourceConfig {
     }
 
     @Primary
-    @Bean(name="postgreTransactionManager")
+    @Bean(name="postgreTransactionManager")             // bean name for transaction manager
     public PlatformTransactionManager platformTransactionManager(@Qualifier("postgreEntityManagerBean") EntityManagerFactory entityManagerFactory)
     {
         return new JpaTransactionManager(entityManagerFactory);
